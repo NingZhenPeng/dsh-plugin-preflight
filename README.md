@@ -212,6 +212,44 @@ node scripts/selftest.mjs
 
 > 自测只随 GitHub 仓库提供，不进 npm 包（`files` 里不含它）。
 
+## 本地开发
+
+```bash
+git clone https://github.com/NingZhenPeng/dsh-plugin-preflight.git
+cd dsh-plugin-preflight
+```
+
+### 克隆后必须做一次：启用钩子
+
+钩子文件放在 `githooks/`（这样能随仓库分发），但 Git 默认只去 `.git/hooks/` 找。
+`.git` 不属于仓库内容，克隆不会带过来，所以必须显式告诉 Git 换位置：
+
+```bash
+git config core.hooksPath githooks
+```
+
+**不做这一步的后果**：提交与推送都不会被扫描，敏感内容可能直接进入公开历史。
+
+启用后有两道本地防线：
+
+| 钩子 | 时机 | 检查 |
+|---|---|---|
+| `pre-commit` | 提交前 | 暂存内容里的绝对路径 / token / 邮箱 / 私钥 |
+| `pre-push` | 推送前 | 上面这些 + 提交身份必须 noreply + 版本与 CHANGELOG 一致 + 无私有目录 |
+
+### 手动跑一次检查
+
+```bash
+node scripts/prepush-check.mjs
+```
+
+预期：`✓ 推送前检查通过（版本 x.y.z，提交身份 N 条）`
+
+### 贡献方式
+
+本仓库是**发布产物**：源码在维护者的私有工作空间，经白名单复制与扫描后出库到这里。
+直接在本仓库改代码，下次出库会被覆盖——请提 issue 或 PR，由维护者回到源头修改。
+
 ## 发布清单
 
 包名已改为 `dsh-plugin-preflight`（无作用域、无 `private`），可直接 `npm publish`。
