@@ -1,8 +1,8 @@
 {
   "$comment": "插件安装预检策略：唯一真源。改规则只改这里，脚本与技能都读它。",
   "version": 1,
-  "hostVersion": "0.2.1-rc.3",
-  "hostVersionNote": "宿主 DSH 版本。升级 DSH 后必须同步改这里，或在运行时用 --host 覆盖。",
+  "hostVersion": "0.2.1-rc.5",
+  "hostVersionNote": "宿主 DSH 版本的兜底值；运行时优先用宿主注入的 DSH_CLIENT_VERSION，取不到才用这里。",
 
   "rules": {
     "repo": {

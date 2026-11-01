@@ -263,7 +263,7 @@ try {
 // 夹具路径刻意用中性占位符：真实安装路径不能出现在公开仓库里
 const rawCmd = 'Command failed: C:\\path\\to\\DeepSeek Harness.exe C:\\path\\to\\preflight.mjs dsh-ops --json --config C:\\path\\to\\runtime.json'
 const friendly = friendlyReason(rawCmd)
-check('命令失败翻译成人话', friendly === '预检脚本无法执行（解释器或脚本缺失）', friendly)
+check('命令失败翻译成人话', friendly === '预检脚本执行失败（详见审计日志）', friendly)
 check('翻译后不含盘符路径', !/[A-Za-z]:\\/.test(friendly))
 check('网络错误翻译成人话', friendlyReason('fetch failed').includes('网络请求失败'))
 check('超时翻译成人话', friendlyReason('Command timed out after 20000ms').includes('超时'))

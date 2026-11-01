@@ -52,7 +52,8 @@ export function friendlyReason(raw) {
   if (/fetch failed|ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ECONNRESET|network/i.test(text)) {
     return '网络请求失败（断网，或 GitHub / npm 暂时不可达）'
   }
-  if (/ENOENT|EACCES|Command failed/i.test(text)) return '预检脚本无法执行（解释器或脚本缺失）'
+  if (/ENOENT|EACCES/i.test(text)) return '预检脚本无法执行（解释器或脚本缺失）'
+  if (/Command failed/i.test(text)) return '预检脚本执行失败（详见审计日志）'
   if (/JSON|Unexpected token/i.test(text)) return '预检输出无法解析'
   // 兜底：至少把本机绝对路径抹掉
   return text.replace(/[A-Za-z]:\\[^\s]*/g, '…').slice(0, 120) || '未知原因'
@@ -163,7 +164,7 @@ export function formatReport(data, pkgName, version) {
   lines.push(`其余 ${passed.length} 项通过`)
   lines.push('')
   lines.push('处置：换一个兼容版本，或装完后把版本钉死；确需强行安装，')
-  lines.push('      把 plugins/dsh-plugin-guard/runtime.json 的 mode 改成 "warn"（立即生效，无需重启）。')
+  lines.push('      在侧栏「插件预检 → 当前模式」切到「只记录」（立即生效，无需重启）。')
   return lines.join('\n')
 }
 
@@ -525,7 +526,7 @@ export function apply(ctx, config = {}) {
       '',
       '## 如果确实要装',
       '',
-      '1. 把 `plugins/dsh-plugin-guard/runtime.json` 的 `mode` 改成 `"warn"`——**立即生效，不用重启**；',
+      '1. 在侧栏「插件预检 → 当前模式」切到「只记录」（或改数据目录下 `runtime.json` 的 `mode` 为 `"warn"`）——**立即生效，不用重启**；',
       '2. 闸门随后只记录、不拦截；',
       '3. 装完记得改回 `"enforce"`。',
       '',

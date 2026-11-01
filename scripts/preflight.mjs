@@ -107,7 +107,7 @@ function satisfy(range, version) {
 // ── 网络 ────────────────────────────────────────────────────────────────
 
 async function getJson(url) {
-  const res = await fetch(url, { headers: { accept: 'application/json', 'user-agent': 'dsh-plugin-guard/0.1' } })
+  const res = await fetch(url, { headers: { accept: 'application/json', 'user-agent': 'dsh-plugin-preflight/0.15' } })
   if (res.status === 404) return { ok: false, status: 404, body: null }
   if (!res.ok) return { ok: false, status: res.status, body: null }
   return { ok: true, status: res.status, body: await res.json() }
