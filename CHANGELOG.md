@@ -3,6 +3,13 @@
 > **约定：每次修复缺陷，都要在下面「修复记录」表里追加一行。**
 > 不是为了好看，是因为这个插件有三处依赖宿主未公开的内部结构——不记下"为什么这么写"，下次改的人（包括我自己）一定会踩回去。
 
+## 0.15.4 — 2026-11-01
+
+- README 首段补全「DeepSeek Harness（DSH）」全称，并说明本插件是 dsh bundle、挂载在 `installBundle` 之前。
+  原因：插件目录站要求「`dsh-plugin` topic / dsh bundle 声明 / 清晰的 DeepSeek Harness 说明」三者至少其一，
+  而 README 原先通篇只写 DSH，站点扫描不到全称，提交时报「暂时无法解析该仓库」。
+- 安装小节补充 GitHub 安装方式（`dsh plugin --profile desktop add github:NingZhenPeng/dsh-plugin-preflight`）。
+
 ## 0.15.3 — 2026-11-01
 
 - README 新增「本地开发」小节：克隆后必须执行 `git config core.hooksPath githooks`（钩子放在 `githooks/` 才能随仓库分发，但 Git 默认只认 `.git/hooks/`），并说明不做的后果与手动检查命令。

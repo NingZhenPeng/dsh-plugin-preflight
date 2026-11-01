@@ -1,6 +1,8 @@
 # dsh-plugin-preflight
 
-DSH 的**插件安装预检闸门**。装插件之前先核一遍规则，判定为「拒绝」就中止安装，并把每次尝试写进审计日志。
+DeepSeek Harness（DSH）的**插件安装预检闸门**。装插件之前先核一遍规则，判定为「拒绝」就中止安装，并把每次尝试写进审计日志。
+
+它是一个 DSH 插件（dsh bundle），通过 `cordis.patch.yml` 挂到宿主的插件加载链上，在 `pluginManager.installBundle` 之前插入九项预检。
 
 它不是市场，也不替你决定装什么——它只在你按下「安装」到 pnpm 真正执行之间，插一道检查。
 
@@ -50,7 +52,15 @@ pluginManager.installBundle（被本插件包装）
 
 ## 安装
 
-桌面端：插件页 →「添加插件」→ 填 `dsh-plugin-preflight`（已发布时）或本目录的绝对路径 → 重启。
+本插件面向 DeepSeek Harness（DSH）桌面端与 Web 端。
+
+桌面端：DeepSeek Harness 插件页 →「添加插件」→ 填 `dsh-plugin-preflight`（已发布到 npm 时）或本目录的绝对路径 → 重启。
+
+从 GitHub 安装（未发布 npm 时）：
+
+```bash
+dsh plugin --profile desktop add github:NingZhenPeng/dsh-plugin-preflight
+```
 
 命令行（仅纯 web profile）：
 
