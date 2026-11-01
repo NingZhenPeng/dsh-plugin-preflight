@@ -1,0 +1,13 @@
+#!/bin/sh
+# 推送前防线：这一刻内容才真正离开本机。
+#
+# 检查四件事：
+#   1. 全量敏感扫描（路径 / token / 邮箱 / 私钥）
+#   2. 提交身份全部是 noreply（不能把真名或公司邮箱带到公开历史里）
+#   3. package.json 版本与 CHANGELOG 最新小节一致
+#   4. 没有私有目录混入（docs / dsh-rules / node_modules / runtime.json）
+#
+# 用 `git push --no-verify` 可跳过，但 GitHub 侧的 Push Protection 仍会拦已知 token。
+
+set -e
+exec node scripts/prepush-check.mjs

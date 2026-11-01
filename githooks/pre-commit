@@ -1,0 +1,15 @@
+#!/bin/sh
+# 提交前防线：扫描即将进入仓库的内容。
+#
+# 为什么放在提交而不是推送：提交后内容就进了本地历史，
+# 即使后面拦住推送，历史里也已经有了。
+#
+# 用 `git commit --no-verify` 可跳过——这是有意保留的逃生门，
+# 但推送前的 pre-push 会再查一遍全量。
+
+set -e
+files=$(git diff --cached --name-only --diff-filter=ACM)
+if [ -z "$files" ]; then
+  exit 0
+fi
+exec node scripts/scan-sensitive.mjs $files
