@@ -39,6 +39,26 @@ function packageNameOf(spec) {
 }
 
 /**
+ * 把预检失败的原始错误翻译成一句人话。
+ *
+ * 为什么必须转：`execFile` 的错误消息里带着完整命令行（本机绝对路径、解释器、
+ * 内部参数）。直接展示给用户等于泄露本机目录结构，截图分享时更糟；
+ * 而且对用户也毫无用处——他不需要知道我们的脚本在哪。
+ * 原始文本仍写进审计，供事后排查。
+ */
+export function friendlyReason(raw) {
+  const text = String(raw ?? '')
+  if (/timed?\s?out|ETIMEDOUT|killed/i.test(text)) return '预检超时，未能在限定时间内完成'
+  if (/fetch failed|ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ECONNRESET|network/i.test(text)) {
+    return '网络请求失败（断网，或 GitHub / npm 暂时不可达）'
+  }
+  if (/ENOENT|EACCES|Command failed/i.test(text)) return '预检脚本无法执行（解释器或脚本缺失）'
+  if (/JSON|Unexpected token/i.test(text)) return '预检输出无法解析'
+  // 兜底：至少把本机绝对路径抹掉
+  return text.replace(/[A-Za-z]:\\[^\s]*/g, '…').slice(0, 120) || '未知原因'
+}
+
+/**
  * 跑一次预检脚本，永不抛错。
  *
  * 解释器按顺序尝试多个候选：
@@ -78,12 +98,13 @@ function runPreflight({ nodePath, scriptPath, timeoutMs, runtimeFile, hostVersio
             // 只有「解释器不存在 / 不可执行」才换候选；脚本跑失败原样上报
             const missing = error.code === 'ENOENT' || error.code === 'EACCES'
             if (missing) return resolve(attempt(index + 1))
-            return resolve({ ok: false, reason: error.message })
+            // 对外只说人话；原始命令行只进审计（见 friendlyReason 的注释）
+            return resolve({ ok: false, reason: friendlyReason(error.message), detail: error.message })
           }
           try {
             return resolve({ ok: true, data: JSON.parse(String(stdout)) })
           } catch {
-            return resolve({ ok: false, reason: '预检输出无法解析为 JSON' })
+            return resolve({ ok: false, reason: '预检输出无法解析' })
           }
         },
       )
@@ -734,7 +755,8 @@ export function apply(ctx, config = {}) {
 
       if (policyOnUnverified === 'block') {
         const reason = `预检无法完成：${result.reason}`
-        void writeAudit({ spec, package: pkgName, verdict: 'unverified', blocked: true, reason })
+        // detail 只进审计（含原始命令行），不进任何界面文案
+        void writeAudit({ spec, package: pkgName, verdict: 'unverified', blocked: true, reason, detail: result.detail })
         await blockInstall({
           spec,
           pkgName,

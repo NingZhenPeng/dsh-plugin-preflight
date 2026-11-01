@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-preflight",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "type": "module",
   "icon": "./icon.svg",
   "description": "插件安装预检闸门：在 pluginManager.installBundle 之前跑预检，判定为拒绝时中止安装，并把每次检查写入审计日志；侧栏面板可切换拦截/只记录、调整规则与阈值。",

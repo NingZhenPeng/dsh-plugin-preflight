@@ -9,7 +9,7 @@
 import { mkdir, mkdtemp, readFile, readdir, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { apply, formatReport, validateCustomRules, admitRequest } from '../index.js'
+import { apply, formatReport, validateCustomRules, admitRequest, friendlyReason } from '../index.js'
 
 const results = []
 const check = (label, ok, detail = '') => {
@@ -258,6 +258,16 @@ try {
 } catch (error) {
   check('默认读 docs/runtime.json', false, error.message.slice(0, 30))
 }
+
+// 16) 对外文案不泄露本机路径与命令行
+// 夹具路径刻意用中性占位符：真实安装路径不能出现在公开仓库里
+const rawCmd = 'Command failed: C:\\path\\to\\DeepSeek Harness.exe C:\\path\\to\\preflight.mjs dsh-ops --json --config C:\\path\\to\\runtime.json'
+const friendly = friendlyReason(rawCmd)
+check('命令失败翻译成人话', friendly === '预检脚本无法执行（解释器或脚本缺失）', friendly)
+check('翻译后不含盘符路径', !/[A-Za-z]:\\/.test(friendly))
+check('网络错误翻译成人话', friendlyReason('fetch failed').includes('网络请求失败'))
+check('超时翻译成人话', friendlyReason('Command timed out after 20000ms').includes('超时'))
+check('未知错误也会抹掉路径', !/[A-Za-z]:\\/.test(friendlyReason('boom E:\\a\\b\\c.exe died')))
 
 // 14) 卸载还原（必须最后执行：还原后 manager 不再经过闸门）
 const wrapped = manager.installBundle
