@@ -79,6 +79,9 @@ dsh plugin --profile web add dsh-plugin-preflight
 | `auditMaxBytes` | `1048576` | 审计文件上限，超过轮转，保留 3 份旧日志 |
 | `disabledRules` / `allowlist` / `thresholds` / `customRules` | 空 | 见上文 |
 
+**它放在数据目录，不在安装目录**（0.15.0 起）：`dataDir` → `workspaceRoot/docs` → `~/.dsh/plugin-guard`，与审计同一处。
+写在安装目录会导致升级插件时设置被 pnpm 重装覆盖、只读安装则根本写不进去。旧版本留下的 `runtime.json` 会被自动读取，改一次设置后即迁到新位置。
+
 ## 自定义规则
 
 内置九条之外，可以自己加检查。规则写在 `runtime.json` 的 `customRules`，或直接在面板「高级设置 → 自定义规则」里添加。
@@ -188,11 +191,14 @@ npm.weeklyDownloads < 100
 
 ## 数据在哪
 
+默认在 `~/.dsh/plugin-guard/`（可用 `dataDir` 或 `workspaceRoot` 改）：
+
 | 文件 | 内容 |
 |---|---|
-| `plugin-guard.jsonl` | 每次安装尝试一行（含放行、拦截、无法验证） |
-| `last-block.md` | 最近一次拦截的人可读说明 |
-| `last-block.json` | 同上，结构化副本，供面板读取 |
+| `runtime.json` | 运行期配置（模式、阈值、自定义规则） |
+| `audit/plugin-guard.jsonl` | 每次安装尝试一行（含放行、拦截、无法验证） |
+| `audit/last-block.md` | 最近一次拦截的人可读说明 |
+| `audit/last-block.json` | 同上，结构化副本，供面板读取 |
 
 ## 自测
 
@@ -200,9 +206,11 @@ npm.weeklyDownloads < 100
 node scripts/selftest.mjs
 ```
 
-27 项断言，覆盖：通过放行、拒绝拦截、警告放行、预检失败默认拦截、策略放行、本地路径跳过、模式热切换（warn→放行→enforce→再拦）、卸载还原、审计落盘与去重、结构化报告、自定义规则校验（未知字段 / 语法错 / 非法等级 / 缺标题 / contains）。
+36 项断言，覆盖：通过放行、拒绝拦截、警告放行、预检失败默认拦截、策略放行、本地路径跳过、模式热切换（warn→放行→enforce→再拦）、卸载还原、审计落盘与去重、审计轮转、请求准入（DNS rebinding / 局域网 / Origin）、降级时仍然拦截、运行期配置落在数据目录、结构化报告、自定义规则校验（未知字段 / 语法错 / 非法等级 / 缺标题 / contains）。
 
 不联网、不起子进程（预检用桩函数注入）。
+
+> 自测只随 GitHub 仓库提供，不进 npm 包（`files` 里不含它）。
 
 ## 发布清单
 

@@ -268,31 +268,46 @@ export function apply(ctx, config = {}) {
     }
   })()
 
-  // 数据目录解析顺序：
+  // 数据目录解析顺序（审计、运行期配置都放这里）：
   //   1. dataDir（显式指定，产品态推荐）
-  //   2. workspaceRoot/docs/audit（老配置沿用，保证历史数据不丢）
-  //   3. ~/.dsh/plugin-guard/audit（默认，与具体工作空间无关）
-  const auditDir = options.dataDir
+  //   2. workspaceRoot/docs（老配置沿用，保证历史数据不丢；审计在其下的 audit/）
+  //   3. ~/.dsh/plugin-guard（默认，与具体工作空间无关）
+  //
+  // 为什么运行期配置也放这里：它曾经写在**安装目录**（join(here,'runtime.json')），
+  // 后果是升级插件时 pnpm 重装目录、设置全丢；只读安装则根本写不进去。
+  const dataRoot = options.dataDir
     ? resolve(options.dataDir)
     : config.workspaceRoot
-      ? join(options.workspaceRoot, 'docs', 'audit')
-      : join(homedir(), '.dsh', 'plugin-guard', 'audit')
+      ? join(options.workspaceRoot, 'docs')
+      : join(homedir(), '.dsh', 'plugin-guard')
+
+  // 旧布局（dataDir 直接放审计文件）仍在用的话沿用，避免数据看起来"消失"
+  const legacyAuditFlat = options.dataDir ? join(resolve(options.dataDir), 'plugin-guard.jsonl') : null
+  const auditDir =
+    legacyAuditFlat !== null && existsSync(legacyAuditFlat) && !existsSync(join(dataRoot, 'audit', 'plugin-guard.jsonl'))
+      ? resolve(options.dataDir)
+      : join(dataRoot, 'audit')
 
   const auditFile = join(auditDir, 'plugin-guard.jsonl')
   const blockNoticeFile = join(auditDir, 'last-block.md')
   // 同目录的结构化副本，给界面面板读
   const lastBlockJson = join(auditDir, 'last-block.json')
   // 运行期开关：改这个文件立刻生效，不用重启（cordis.patch.yml 里的 mode 只是启动默认值）
-  const runtimeFile = config.runtimeFile ?? join(here, 'runtime.json')
+  const runtimeFile = config.runtimeFile ?? join(dataRoot, 'runtime.json')
+  // 0.15.0 之前写在安装目录，读的时候回退到老位置，实现无感迁移
+  const legacyRuntimeFile = join(here, 'runtime.json')
 
-  /** 读运行期配置（整份）。 */
+  /** 读运行期配置（整份）。新位置没有时回退到安装目录里的旧文件。 */
   const readOverrides = () => {
-    try {
-      const raw = JSON.parse(readFileSync(runtimeFile, 'utf8'))
-      return raw !== null && typeof raw === 'object' ? raw : {}
-    } catch {
-      return {}
+    for (const file of [runtimeFile, legacyRuntimeFile]) {
+      try {
+        const raw = JSON.parse(readFileSync(file, 'utf8'))
+        if (raw !== null && typeof raw === 'object') return raw
+      } catch {
+        // 继续试下一个候选
+      }
     }
+    return {}
   }
 
   /** 当前模式：runtime.json 优先，缺失或非法时回退到 bundle 配置。 */
@@ -328,6 +343,7 @@ export function apply(ctx, config = {}) {
       const problem = validateCustomRules(next.customRules)
       if (problem !== null) throw new Error(problem)
     }
+    await mkdir(dirname(runtimeFile), { recursive: true })
     await writeFile(runtimeFile, `${JSON.stringify(next, null, 2)}\n`, 'utf8')
     return next
   }

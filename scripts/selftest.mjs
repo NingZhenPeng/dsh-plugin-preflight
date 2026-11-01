@@ -6,7 +6,7 @@
 // 注意：本文件在 DSH 沙箱内运行时，任何 spawn + 管道都会 EPERM（沙箱不允
 // 许子进程开命名管道），所以预检必须注入桩函数，不能真起子进程。
 
-import { mkdtemp, readFile, readdir, stat, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { apply, formatReport, validateCustomRules, admitRequest } from '../index.js'
@@ -243,6 +243,21 @@ for (const name of ['pkg-a', 'pkg-b', 'pkg-c', 'pkg-d', 'pkg-e', 'pkg-f']) {
 const rotated = await readFile(`${auditPath}.1`, 'utf8').catch(() => '')
 const auditDirFiles = (await readdir(join(workspaceRoot, 'docs', 'audit')).catch(() => [])).join(',')
 check('审计轮转生成 .1', rotated.length > 0, `轮转前 ${sizeBefore}B | 配置 ${runtimeNow.trim()} | 目录: ${auditDirFiles} | 日志: ${logs.filter((l) => l.includes('轮转')).join(' / ') || '无'}`)
+
+// 15) 运行期配置默认落在数据目录（docs/runtime.json），不再写进安装目录
+await mkdir(join(workspaceRoot, 'docs'), { recursive: true })
+await writeFile(join(workspaceRoot, 'docs', 'runtime.json'), JSON.stringify({ mode: 'warn' }), 'utf8')
+const manager2 = { installs: new Map(), installBundle: async () => ({}) }
+apply(
+  { logger: { info: () => {}, warn: () => {} }, get: () => manager2, effect: (factory) => factory(), emit: () => {} },
+  { workspaceRoot, preflight: stub },
+)
+try {
+  await manager2.installBundle('dsh-our-free-model')
+  check('默认读 docs/runtime.json', calls.includes('dsh-our-free-model'))
+} catch (error) {
+  check('默认读 docs/runtime.json', false, error.message.slice(0, 30))
+}
 
 // 14) 卸载还原（必须最后执行：还原后 manager 不再经过闸门）
 const wrapped = manager.installBundle
