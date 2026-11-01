@@ -1,0 +1,12 @@
+{
+  "$comment": "运行期配置：改这里立即生效，不需要重启。侧栏面板「高级设置」写的也是这份文件。",
+  "mode": "enforce",
+  "onUnverified": "block",
+  "timeoutMs": 20000,
+  "disabledRules": [],
+  "allowlist": [],
+  "thresholds": {
+    "repo.maxIdleDays": 90
+  },
+  "customRules": []
+}

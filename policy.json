@@ -1,0 +1,71 @@
+{
+  "$comment": "插件安装预检策略：唯一真源。改规则只改这里，脚本与技能都读它。",
+  "version": 1,
+  "hostVersion": "0.2.1-rc.3",
+  "hostVersionNote": "宿主 DSH 版本。升级 DSH 后必须同步改这里，或在运行时用 --host 覆盖。",
+
+  "rules": {
+    "repo": {
+      "title": "GitHub 仓库与活跃度",
+      "requireGithub": true,
+      "maxIdleDays": 90,
+      "severityMissing": "reject",
+      "severityIdle": "reject",
+      "severityArchived": "reject",
+      "severityUnknown": "warn"
+    },
+    "installScripts": {
+      "title": "安装即执行脚本",
+      "blocked": ["preinstall", "install", "postinstall"],
+      "warnOnly": ["prepare"],
+      "severity": "reject",
+      "note": "blocked 命中即拒绝；prepare 仅在 git 源安装时执行，降级为警告。"
+    },
+    "deprecated": {
+      "title": "是否已弃用",
+      "severity": "reject"
+    },
+    "aggregate": {
+      "title": "是否聚合包",
+      "warnAboveDeps": 1,
+      "rejectAboveDeps": 8,
+      "severity": "warn"
+    },
+    "compatibility": {
+      "title": "与宿主版本兼容",
+      "checkEnginesDsh": true,
+      "checkPeerDsh": true,
+      "checkDeclaredReleases": true,
+      "severity": "reject",
+      "severityPeer": "warn"
+    },
+    "selfUpdate": {
+      "title": "自更新 / 热重载能力",
+      "scriptPatterns": ["updat", "self-update", "hot-reload", "hotreload"],
+      "depPatterns": ["updater", "self-update"],
+      "readmePatterns": ["自更新", "热重载", "一键升级", "应用内升级", "auto-update", "self-update", "hot reload", "hot-reload"],
+      "severity": "warn"
+    },
+    "thirdPartyAccounts": {
+      "title": "是否要求第三方账号",
+      "textPatterns": ["账号", "登录", "oauth", "sign in", "signin", "account pool", "账号池"],
+      "severity": "manual"
+    },
+    "provenance": {
+      "title": "npm provenance 签名",
+      "severity": "bonus"
+    },
+    "versionPin": {
+      "title": "装后钉版本",
+      "requireExact": true,
+      "severity": "reminder"
+    }
+  },
+
+  "verdicts": {
+    "pass": "通过",
+    "warn": "警告",
+    "reject": "拒绝",
+    "manual": "需人工"
+  }
+}

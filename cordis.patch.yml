@@ -1,0 +1,14 @@
+# 本 bundle 的 Loader 补丁：插入一行插件条目。
+#
+# 这里刻意不写任何绝对路径——包一旦写死某台机器的目录，别人装上就废。
+# 数据目录解析顺序（见 index.js）：
+#   1. dataDir（显式指定）
+#   2. 旧配置兼容：workspaceRoot/docs/audit
+#   3. 默认：~/.dsh/plugin-guard/audit
+# 需要固定数据位置时，在**自己的 profile 补丁**里覆盖本行，而不是改这个文件。
+- insert:
+    - id: plugin-guard
+      name: 'dsh-plugin-preflight'
+      config:
+        mode: enforce
+        timeoutMs: 20000
